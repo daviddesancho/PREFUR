@@ -9,6 +9,7 @@ install:
             - make build 
 
 script:
+          "echo \"TODO\""
           # avoid running in the checkout directory so nose finds built modules..
           #     - rundir=$HOME
           #     - cd $rundir
