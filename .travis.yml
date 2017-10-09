@@ -6,7 +6,7 @@ travis:
             - develop
 
 install:
-            - python setup.py install 
+            - make build 
 
 script:
           # avoid running in the checkout directory so nose finds built modules..
