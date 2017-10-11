@@ -2,7 +2,7 @@
 
 import numpy as np
 
-def rates(DDG=None, nres=None, temp=298):
+def rates(barrier=None, nres=None, temp=298):
     """
     Estimation of (un)folding rates in s^-1 from the free energy barrier
 
