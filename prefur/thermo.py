@@ -11,7 +11,7 @@ class FES(object):
 
     Parameters
     ----------
-    protsize : int
+    nres : int
         The number of amino acids
 
     Attributes
@@ -33,8 +33,8 @@ class FES(object):
 
     """
 
-    def __init__(self, protsize):
-        self.protsize = protsize
+    def __init__(self, nres):
+        self.nres = nres
         self.nat = np.linspace(0,1.0,100)
         
     def gen_enthalpy(self, DHres=6.2, kDH=3):
@@ -50,7 +50,7 @@ class FES(object):
             Curvature of enthalpy profile.
 
         """
-        N = self.protsize
+        N = self.nres
         n = self.nat
         self.DHo = N*DHres*(1 + (np.exp(kDH*n) - 1)/(1 - np.exp(kDH)))
         
@@ -67,7 +67,7 @@ class FES(object):
             Curvature of heat capacity profile.
 
         """
-        N = self.protsize
+        N = self.nres
         n = self.nat
         self.DCp = N*DCpres*(1 + (np.exp(kDCp*n) - 1)/(1 - np.exp(kDCp)))
 
@@ -81,19 +81,19 @@ class FES(object):
             Conformational entropy per residue as a function of nativeness (kJ/mol)
 
         """
-        N = self.protsize
+        N = self.nres
         n = self.nat
         self.DSconf = N*(-R*(n*np.log(n) + (1.-n)*np.log(1-n)) + (1-n)*DSres)
         self.DSconf[0] = N*DSres
         self.DSconf[-1] = 0
 
-    def gen_free(self, T, Tref=385.):
+    def gen_free(self, temp=298., Tref=385.):
         """
         Generates entropy as a function of nativeness
 
         Parameters
         ----------
-        T : float
+        temp : float
             Temperature of interest (K). 
 
         Tref : float
@@ -115,11 +115,11 @@ class FES(object):
         except AttributeError:
             self.gen_heatcap()
 
-        self.DH = self.DHo + self.DCp*(T - Tref)
-        self.DS = self.DSconf + self.DCp*np.log(T/Tref)
-        self.DG = self.DH - T*self.DS
+        self.DH = self.DHo + self.DCp*(temp - Tref)
+        self.DS = self.DSconf + self.DCp*np.log(temp/Tref)
+        self.DG = self.DH - temp*self.DS
 
-    def denature(self, FD, T=298., Tref=385., C=0.04, j=8.):
+    def denature(self, FD, temp=298., Tref=385., C=0.04, j=8.):
         """
         Introduce chemical denaturant
 
@@ -133,10 +133,11 @@ class FES(object):
 
         """
         self.mdenat = 1 - (1 + C)*(self.nat**j / (self.nat**j + C))
-        self.gen_free(T, Tref=Tref)
+        self.gen_free(temp, Tref=Tref)
+
         self.DGdenat = self.DG - self.mdenat*FD
 
-def stability(nat, free, T=298):
+def stability(nat, free, temp=298):
     """
     Calculates the stability given a free energy profile
 
@@ -148,7 +149,7 @@ def stability(nat, free, T=298):
     free : array
         The free energy profile.
 
-    T : float
+    temp : float
         The temperature of interest
 
     """
@@ -157,13 +158,13 @@ def stability(nat, free, T=298):
     its = np.argmin(np.abs(free - free_ts))
 
     # calculate populations
-    beta = 1./(T*8.314e-3) 
+    beta = 1./(temp*8.314e-3) 
     pop = np.exp(-beta*free)
     pop /= np.trapz(pop, nat)
     pf = np.trapz(pop[its:], nat[its:])
     pu = np.trapz(pop[:its], nat[:its])
     
-    stab = R*T*np.log(pf/pu)
+    stab = R*temp*np.log(pf/pu)
     return pf, pu, stab
 
 def barrier(free, n=None, u=None):
