@@ -16,7 +16,7 @@ class FES(object):
 
     Attributes
     ----------
-    natness : array
+    nat : array
         The nativeness value.
 
     enthalpy : array
@@ -35,7 +35,7 @@ class FES(object):
 
     def __init__(self, protsize):
         self.protsize = protsize
-        self.natness = np.linspace(0,1.0,100)
+        self.nat = np.linspace(0,1.0,100)
         
     def gen_enthalpy(self, DHres=6.2, kDH=3):
         """
@@ -43,9 +43,15 @@ class FES(object):
 
         Parameters
         ----------
+        DHres : float
+            Enthalpy per residue at reference temperature (kJ/mol).
+
+        kDH : float
+            Curvature of enthalpy profile.
+
         """
         N = self.protsize
-        n = self.natness
+        n = self.nat
         self.DHo = N*DHres*(1 + (np.exp(kDH*n) - 1)/(1 - np.exp(kDH)))
         
     def gen_heatcap(self, DCpres=58e-3, kDCp=4.3):
@@ -54,9 +60,15 @@ class FES(object):
 
         Parameters
         ----------
+        DCpres : float
+            Heat capacity per residue (kJ/mol/K).
+
+        kDCp : float
+            Curvature of heat capacity profile.
+
         """
         N = self.protsize
-        n = self.natness
+        n = self.nat
         self.DCp = N*DCpres*(1 + (np.exp(kDCp*n) - 1)/(1 - np.exp(kDCp)))
 
     def gen_entropy(self, DSres=16.5e-3):
@@ -70,7 +82,7 @@ class FES(object):
 
         """
         N = self.protsize
-        n = self.natness
+        n = self.nat
         self.DSconf = N*(-R*(n*np.log(n) + (1.-n)*np.log(1-n)) + (1-n)*DSres)
         self.DSconf[0] = N*DSres
         self.DSconf[-1] = 0
@@ -81,10 +93,60 @@ class FES(object):
 
         Parameters
         ----------
-        DSres : float
-            Conformational entropy per residue as a function of nativeness (kJ/mol)
+        T : float
+            Temperature of interest (K). 
+
+        Tref : float
+            Reference temperature (K). 
 
         """
         self.DH = self.DHo + self.DCp*(T - Tref)
         self.DS = self.DSconf + self.DCp*np.log(T/Tref)
         self.DG = self.DH - T*self.DS
+
+    def denature(self, FD, T=298., Tref=385., C=0.04, j=8.):
+        """
+        Introduce chemical denaturant
+
+        Parameters
+        ----------
+        FD : float, array
+            Amount of denaturantion free energy.
+
+        Tref : float
+            Reference temperature (K). 
+
+        """
+        self.mdenat = 1 - (1 + C)*(self.nat**j / (self.nat**j + C))
+        self.gen_free(T, Tref=Tref)
+        self.DGdenat = self.DG - self.mdenat*FD
+
+def stability(nat, free, T=298):
+    """
+    Calculates the stability given a free energy profile
+
+    Parameters
+    ----------
+    nat : array
+        The nativeness value.
+
+    free : array
+        The free energy profile.
+
+    T : float
+        The temperature of interest
+
+    """
+    # find transition state
+    free_ts = np.max(free[10:-10])
+    its = np.argmin(np.abs(free - free_ts))
+
+    # calculate populations
+    beta = 1./(T*8.314e-3) 
+    pop = np.exp(-beta*free)
+    pop /= np.trapz(pop, nat)
+    pf = np.trapz(pop[its:], nat[its:])
+    pu = np.trapz(pop[:its], nat[:its])
+    
+    stab = R*T*np.log(pf/pu)
+    return pf, pu, stab
