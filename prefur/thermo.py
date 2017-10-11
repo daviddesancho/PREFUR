@@ -50,9 +50,50 @@ class FES(object):
             Curvature of enthalpy profile.
 
         """
-        N = self.nres
-        n = self.nat
-        self.DHo = N*DHres*(1 + (np.exp(kDH*n) - 1)/(1 - np.exp(kDH)))
+        nres = self.nres
+        nat = self.nat
+        self.DHo = enthalpy(nres, nat, DHres=DHres, kDH=kDH)
+
+    def gen_enthalpy_local(self, DHres=6.2, kDH=-1.25):
+        """
+        Generates local enthalpy as a function of nativeness
+
+        Parameters
+        ----------
+        DHres : float
+            Enthalpy per residue at reference temperature (kJ/mol).
+
+        kDH : float
+            Curvature of enthalpy profile.
+
+        """
+        nres = self.nres
+        nat = self.nat
+        self.DHo_loc = enthalpy(nat, nres, DHres=DHres, kDH=kDH)
+
+    def gen_enthalpy_nonlocal(self, DHres=6.2, kDH=3.75):
+        """
+        Generates non-local enthalpy as a function of nativeness
+
+        Parameters
+        ----------
+        DHres : float
+            Enthalpy per residue at reference temperature (kJ/mol).
+
+        kDH : float
+            Curvature of enthalpy profile.
+
+        """
+        nres = self.nres
+        nat = self.nat
+        self.DHo_nonloc = enthalpy(nat, nres, DHres=DHres, kDH=kDH)
+
+    def gen_enthalpy_global(self, DHloc=3.1, DHnonloc=3.1, kDHloc=-1.25, kDHnonloc=3.75)
+        nres = self.nres
+        nat = self.nat
+        self.gen_enthalpy_local(nres, nat, DHres=DHloc, kDH=kDHloc)
+        self.gen_enthalpy_nonlocal(nres, nat, DHres=DHnonloc, kDH=kDHnoloc)
+        self.DHo = self.DHo_loc + self.DHo_nonloc
         
     def gen_heatcap(self, DCpres=58e-3, kDCp=4.3):
         """
@@ -67,9 +108,9 @@ class FES(object):
             Curvature of heat capacity profile.
 
         """
-        N = self.nres
-        n = self.nat
-        self.DCp = N*DCpres*(1 + (np.exp(kDCp*n) - 1)/(1 - np.exp(kDCp)))
+        nres = self.nres
+        nat = self.nat
+        self.DCp = nres*DCpres*(1 + (np.exp(kDCp*nat) - 1)/(1 - np.exp(kDCp)))
 
     def gen_entropy(self, DSres=16.5e-3):
         """
@@ -81,10 +122,10 @@ class FES(object):
             Conformational entropy per residue as a function of nativeness (kJ/mol)
 
         """
-        N = self.nres
-        n = self.nat
-        self.DSconf = N*(-R*(n*np.log(n) + (1.-n)*np.log(1-n)) + (1-n)*DSres)
-        self.DSconf[0] = N*DSres
+        nres = self.nres
+        nat = self.nat
+        self.DSconf = nres*(-R*(nat*np.log(nat) + (1.-nat)*np.log(1-nat)) + (1-nat)*DSres)
+        self.DSconf[0] = nres*DSres
         self.DSconf[-1] = 0
 
     def gen_free(self, temp=298., Tref=385.):
@@ -134,8 +175,28 @@ class FES(object):
         """
         self.mdenat = 1 - (1 + C)*(self.nat**j / (self.nat**j + C))
         self.gen_free(temp, Tref=Tref)
-
         self.DGdenat = self.DG - self.mdenat*FD
+
+def enthalpy(nres, nat, DHres=None, kDH=None):
+    """
+    Helper function for estimating enthalpies
+
+    Parameters
+    ----------
+    N : int
+        
+
+    n : array
+        
+
+    DHres : float
+        Enthalpy per residue at reference temperature (kJ/mol).
+
+    kDH : float
+        Curvature of enthalpy profile.
+
+    """
+    return nres*DHres*(1 + (np.exp(kDH*nat) - 1)/(1 - np.exp(kDH)))
 
 def stability(nat, free, temp=298):
     """
@@ -167,7 +228,7 @@ def stability(nat, free, temp=298):
     stab = R*temp*np.log(pf/pu)
     return pf, pu, stab
 
-def barrier(free, n=None, u=None):
+def barrier(free):
     """
     Estimation of barrier height from free energy surface
 
