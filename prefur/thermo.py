@@ -100,6 +100,21 @@ class FES(object):
             Reference temperature (K). 
 
         """
+        try:
+            self.DHo
+        except AttributeError:
+            self.gen_enthalpy()
+
+        try:
+            self.DSconf
+        except AttributeError:
+            self.gen_entropy()
+
+        try:
+            self.DCp
+        except AttributeError:
+            self.gen_heatcap()
+
         self.DH = self.DHo + self.DCp*(T - Tref)
         self.DS = self.DSconf + self.DCp*np.log(T/Tref)
         self.DG = self.DH - T*self.DS
@@ -150,3 +165,19 @@ def stability(nat, free, T=298):
     
     stab = R*T*np.log(pf/pu)
     return pf, pu, stab
+
+def barrier(free, n=None, u=None):
+    """
+    Estimation of barrier height from free energy surface
+
+    Parameters
+    ----------
+    free : array
+        Free energy profile.
+        
+    """
+    fmax = np.max(free[10:-10])
+    imax = np.argmin(np.abs(free - fmax))
+    fumin = np.min(free[:imax])
+    ffmin = np.min(free[imax:])
+    return fmax - fumin, fmax - ffmin
