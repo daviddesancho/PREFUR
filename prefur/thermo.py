@@ -54,7 +54,7 @@ class FES(object):
         nat = self.nat
         self.DHo = enthalpy(nres, nat, DHres=DHres, kDH=kDH)
 
-    def gen_enthalpy_local(self, DHres=6.2, kDH=-1.25):
+    def gen_enthalpy_local(self, DHres=0, kDH=-1.25):
         """
         Generates local enthalpy as a function of nativeness
 
@@ -69,7 +69,7 @@ class FES(object):
         """
         nres = self.nres
         nat = self.nat
-        self.DHo_loc = enthalpy(nat, nres, DHres=DHres, kDH=kDH)
+        self.DHo_loc = enthalpy(nres, nat, DHres=DHres, kDH=kDH)
 
     def gen_enthalpy_nonlocal(self, DHres=6.2, kDH=3.75):
         """
@@ -86,13 +86,11 @@ class FES(object):
         """
         nres = self.nres
         nat = self.nat
-        self.DHo_nonloc = enthalpy(nat, nres, DHres=DHres, kDH=kDH)
+        self.DHo_nonloc = enthalpy(nres, nat, DHres=DHres, kDH=kDH)
 
-    def gen_enthalpy_global(self, DHloc=3.1, DHnonloc=3.1, kDHloc=-1.25, kDHnonloc=3.75)
-        nres = self.nres
-        nat = self.nat
-        self.gen_enthalpy_local(nres, nat, DHres=DHloc, kDH=kDHloc)
-        self.gen_enthalpy_nonlocal(nres, nat, DHres=DHnonloc, kDH=kDHnoloc)
+    def gen_enthalpy_global(self, DHloc=0, DHnonloc=6.2, kDHloc=-1.25, kDHnonloc=3.75):
+        self.gen_enthalpy_local(DHres=DHloc, kDH=kDHloc)
+        self.gen_enthalpy_nonlocal(DHres=DHnonloc, kDH=kDHnonloc)
         self.DHo = self.DHo_loc + self.DHo_nonloc
         
     def gen_heatcap(self, DCpres=58e-3, kDCp=4.3):
