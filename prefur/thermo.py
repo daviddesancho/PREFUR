@@ -54,7 +54,7 @@ class FES(object):
         nat = self.nat
         self.DHo = enthalpy(nres, nat, DHres=DHres, kDH=kDH)
 
-    def gen_enthalpy_local(self, DHres=0, kDH=-1.25):
+    def gen_enthalpy_local(self, DHres=0, kDH=-1.5):
         """
         Generates local enthalpy as a function of nativeness
 
@@ -88,7 +88,7 @@ class FES(object):
         nat = self.nat
         self.DHo_nonloc = enthalpy(nres, nat, DHres=DHres, kDH=kDH)
 
-    def gen_enthalpy_global(self, DHloc=0, DHnonloc=6.2, kDHloc=-1.25, kDHnonloc=3.75):
+    def gen_enthalpy_global(self, DHloc=0, DHnonloc=6.4, kDHloc=-1.5, kDHnonloc=3.75):
         self.gen_enthalpy_local(DHres=DHloc, kDH=kDHloc)
         self.gen_enthalpy_nonlocal(DHres=DHnonloc, kDH=kDHnonloc)
         self.DHo = self.DHo_loc + self.DHo_nonloc
@@ -236,7 +236,7 @@ def barrier(free):
         Free energy profile.
         
     """
-    fmax = np.max(free[10:-10])
+    fmax = np.max(free[30:-10])
     imax = np.argmin(np.abs(free - fmax))
     fumin = np.min(free[:imax])
     ffmin = np.min(free[imax:])
