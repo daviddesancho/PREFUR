@@ -4,3 +4,8 @@
 
 # PREFUR
 Prediction of folding and unfolding rates of proteins
+
+## Installation 
+```
+python setup.py install
+```
