@@ -49,8 +49,8 @@ def predict(nres=None, struct=None, temp=298.):
     elif struct == "ab":
         FES.gen_enthalpy_global(DHloc=1.5, DHnonloc=5.21)
     else:
-        print " Unknown structural type "
-        print struct
+        print (" Unknown structural type ")
+        print (struct)
         return
     FES.gen_free(temp=temp) 
     bf, bu = thermo.barrier(FES.DG)
